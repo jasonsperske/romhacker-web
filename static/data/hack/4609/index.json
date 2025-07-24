@@ -1,0 +1,13 @@
+{
+    "title": "Phantasy Star III General Improvement",
+    "author": "Fauntleroy",
+    "version": "1.2",
+    "hash": "59D4914E652672FD1E453C76B8250D17E8CA154E",
+    "fileName": "Phantasy Star III - Generations of Doom (UE) - General Improvement",
+    "description": [
+        "The purpose of this hack is to mitigate many of the flaws of Phantasy Star III in order to create an overall play experience more similar to that of Phantasy Star II and Phantasy Star IV. This is done through minor adjustments to the presentation, using the naming conventions from the other games, increasing the number of lore references to the other games, and more. Please see the readme for complete details.",
+        "The script was also significantly expanded in order to fill some holes in the story, address gaps in logic that otherwise go unexplained, and add more flavor by way of new non-player characters.",
+        "We’re currently on version 1.2, the third release of this hack. 1.2 corrects a few minor bugs and makes small changes to the presentation. The primary content is largely unchanged from 1.1.",
+        "Thank you to everyone who tries this hack! Despite how it may sound, this patch is very much intended as a love letter to a favorite game."
+    ]
+}

@@ -1,0 +1,18 @@
+{
+  "name": "romhacker-web",
+  "version": "0.0.0",
+  "description": "A site like RomHacking.net but with online IPS Patching and search by ROM support",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "Jason Sperske",
+  "license": "ISC",
+  "dependencies": {
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "express-ejs-layouts": "^2.5.1",
+    "express-static": "^1.2.6"
+  }
+}

@@ -1,0 +1,16 @@
+{
+    "title": "Phantasy Star II",
+    "description": "A classic RPG set in the Algol star system, featuring a party of characters on a quest to save their world.",
+    "releaseDate": "1989-03-21",
+    "developer": "Sega",
+    "publisher": "Sega",
+    "genre": "Role-Playing",
+    "platforms": ["Sega Genesis", "Mega Drive"],
+    "romSize": "2 MB",
+    "hacks": [{
+        "id": 925,
+        "title": "Phantasy Star II Improvement",
+        "author": "FlamePurge",
+        "version": "4.5"
+    }]
+}

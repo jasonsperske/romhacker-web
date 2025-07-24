@@ -1,0 +1,17 @@
+{
+    "title": "Phantasy Star II Improvement",
+    "author": "FlamePurge",
+    "version": "4.5",
+    "hash": "0711080E968490A6B8C5FAFBB9DB3E62BA597231",
+    "fileName": "Phantasy Star II (USA, Europe) (Rev A) - Improvement",
+    "addendums": [
+        "Doubler_Addendum.ips",
+        "No_Red_Flashes_Addendum.ips",
+        "Original_Names_Addendum.ips"
+    ],
+    "description": [
+        "Bug fix and enhancement mod geared toward rebalancing the underutilized characters and implementing gameplay quality upgrades.",
+        "v4.5 - Includes EvilJagaGenius’ camera movement tweak. Now the camera follows the player as it moves, rather than when they approach the screen’s edge.",
+        "Included are equipment, tech, and tech acquisition lists. These are not required to play PSII Improvement."
+    ]
+}

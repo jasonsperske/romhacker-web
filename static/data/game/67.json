@@ -1,0 +1,21 @@
+{
+    "title": "Phantasy Star III: Generations of Doom",
+    "description": "An epic RPG that continues the saga of the Phantasy Star series with new characters and a rich storyline.",
+    "releaseDate": "1990-10-25",
+    "developer": "Sega",
+    "publisher": "Sega",
+    "genre": "Role-Playing",
+    "platforms": [
+        "Sega Genesis",
+        "Mega Drive"
+    ],
+    "romSize": "2 MB",
+    "hacks": [
+        {
+            "id": 4609,
+            "title": "Phantasy Star III General Improvement",
+            "author": "Fauntleroy",
+            "version": "1.2"
+        }
+    ]
+}

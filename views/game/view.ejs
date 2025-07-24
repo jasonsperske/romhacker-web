@@ -1,0 +1,18 @@
+<h1><%= game.title %></h1>
+<p><%= game.description %></p>
+<ul>
+    <li><strong>Release Date:</strong> <%= game.releaseDate %></li>
+    <li><strong>Developer:</strong> <%= game.developer %></li>
+    <li><strong>Publisher:</strong> <%= game.publisher %></li>
+    <li><strong>Genre:</strong> <%= game.genre %></li>
+    <li><strong>Platforms:</strong> <%= game.platforms.join(', ') %></li>
+    <li><strong>ROM Size:</strong> <%= game.romSize %></li>
+</ul>
+<h2>Hacks</h2>
+<ul>
+    <% game.hacks.forEach(function(hack) { %>
+        <li>
+            <a href="/hack/<%= hack.id %>"><%= hack.title %></a> by <%= hack.author %> (v<%= hack.version %>)
+        </li>
+    <% }); %>
+</ul>
