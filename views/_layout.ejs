@@ -1,11 +1,24 @@
 <html>
+
 <head>
-    <title><%= locals['title'] || 'RomHacker Web' %></title>
+    <title>
+        <%= locals['title'] || 'RomHacker Web' %>
+    </title>
     <link rel="stylesheet" href="/style.css">
 </head>
+
 <body>
     <header>
-        <h1><%= locals['title'] || 'RomHacker Web' %></h1>
+        <h1>
+            <%= locals['title'] || 'RomHacker Web' %>
+        </h1>
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/game">Games</a></li>
+                <li><a href="/search">Search</a></li>
+            </ul>
+        </nav>
     </header>
     <main>
         <%- body %>
@@ -14,4 +27,5 @@
         <p>&copy; 2025 RomHacker Web</p>
     </footer>
 </body>
+
 </html>

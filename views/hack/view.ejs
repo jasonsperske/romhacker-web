@@ -1,4 +1,276 @@
-<h1><%= hack.title %></h1>
+<h1>
+    <%= hack.title %>
+</h1>
 <% hack.description.forEach(function(line) { %>
-    <p><%= line %></p>
-<% }); %>
+    <p>
+        <%= line %>
+    </p>
+    <% }); %>
+
+        <div class="patch-section">
+            <h2>🎮 Apply Patch Online</h2>
+
+            <!-- File Drop Zone -->
+            <div id="dropzone" class="drop-zone">
+                <div class="drop-zone-content">
+                    <i class="drop-icon">👨🏽‍💻</i>
+                    <p class="drop-text">Drop your ROM file here</p>
+                    <p class="drop-subtext">Expected SHA-1: <%= hack.hash %>
+                    </p>
+                    <input type="file" id="fileInput" class="file-input" accept="*/*">
+                </div>
+                <div class="drop-zone-overlay" id="dropOverlay">
+                    <p>Drop your ROM here</p>
+                </div>
+            </div>
+
+            <!-- Status Display -->
+            <div id="statusInfo" class="status-info" style="display: none;">
+                <h3 id="statusTitle">Processing...</h3>
+                <p id="statusMessage">Analyzing ROM file...</p>
+                <div id="progressBar" class="progress-bar">
+                    <div id="progressFill" class="progress-fill"></div>
+                </div>
+            </div>
+
+            <!-- Hash Mismatch Error -->
+            <div id="hashError" class="error-message" style="display: none;">
+                <h3>❌ ROM Hash Mismatch</h3>
+                <p><strong>Expected:</strong> <span id="expectedHash">
+                        <%= hack.hash %>
+                    </span></p>
+                <p><strong>Found:</strong> <span id="foundHash"></span></p>
+                <p>This patch is designed for a specific ROM version. Please ensure you have the correct ROM file.</p>
+            </div>
+
+            <!-- Success Message -->
+            <div id="successMessage" class="success-message" style="display: none;">
+                <h3>✅ Patch Applied Successfully!</h3>
+                <p>Your ROM has been patched and is ready for download.</p>
+                <button id="downloadBtn" class="download-btn">Download Patched ROM</button>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const dropzone = document.getElementById('dropzone');
+                const fileInput = document.getElementById('fileInput');
+                const dropOverlay = document.getElementById('dropOverlay');
+                const statusInfo = document.getElementById('statusInfo');
+                const statusTitle = document.getElementById('statusTitle');
+                const statusMessage = document.getElementById('statusMessage');
+                const progressBar = document.getElementById('progressFill');
+                const hashError = document.getElementById('hashError');
+                const foundHash = document.getElementById('foundHash');
+                const successMessage = document.getElementById('successMessage');
+                const downloadBtn = document.getElementById('downloadBtn');
+
+                const expectedHash = '<%= hack.hash %>';
+                let patchedRomBlob = null;
+                let dragCounter = 0;
+
+                // Prevent default drag behaviors
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    dropzone.addEventListener(eventName, preventDefaults, false);
+                    document.body.addEventListener(eventName, preventDefaults, false);
+                });
+
+                // Handle drag events
+                dropzone.addEventListener('dragenter', function (e) {
+                    preventDefaults(e);
+                    dragCounter++;
+                    highlight();
+                });
+
+                dropzone.addEventListener('dragleave', function (e) {
+                    preventDefaults(e);
+                    dragCounter--;
+                    if (dragCounter === 0) {
+                        unhighlight();
+                    }
+                });
+
+                dropzone.addEventListener('dragover', function (e) {
+                    preventDefaults(e);
+                });
+
+                dropzone.addEventListener('drop', function (e) {
+                    preventDefaults(e);
+                    dragCounter = 0;
+                    unhighlight();
+                    const files = e.dataTransfer.files;
+                    handleFiles(files);
+                });
+
+                fileInput.addEventListener('change', function (e) {
+                    handleFiles(e.target.files);
+                });
+
+                dropzone.addEventListener('click', function () {
+                    fileInput.click();
+                });
+
+                downloadBtn.addEventListener('click', function () {
+                    if (patchedRomBlob) {
+                        downloadPatchedRom();
+                    }
+                });
+
+                function preventDefaults(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+
+                function highlight() {
+                    dropzone.classList.add('drag-over');
+                    dropOverlay.style.display = 'flex';
+                }
+
+                function unhighlight() {
+                    dropzone.classList.remove('drag-over');
+                    dropOverlay.style.display = 'none';
+                }
+
+                function hideAllMessages() {
+                    statusInfo.style.display = 'none';
+                    hashError.style.display = 'none';
+                    successMessage.style.display = 'none';
+                }
+
+                function updateProgress(percent, message) {
+                    progressBar.style.width = percent + '%';
+                    statusMessage.textContent = message;
+                }
+
+                async function handleFiles(files) {
+                    if (files.length === 0) return;
+
+                    hideAllMessages();
+                    const file = files[0];
+
+                    // Show status
+                    statusInfo.style.display = 'block';
+                    statusTitle.textContent = 'Processing ROM...';
+                    updateProgress(10, 'Reading ROM file...');
+
+                    try {
+                        // Calculate ROM hash
+                        updateProgress(30, 'Calculating SHA-1 hash...');
+                        const romHash = await calculateSHA1(file);
+
+                        // Check if hash matches
+                        updateProgress(50, 'Verifying ROM...');
+                        if (romHash !== expectedHash) {
+                            foundHash.textContent = romHash;
+                            hideAllMessages();
+                            hashError.style.display = 'block';
+                            return;
+                        }
+
+                        // Hash matches, apply patch
+                        updateProgress(70, 'Applying patch...');
+                        const patchedRom = await applyPatch(file);
+
+                        updateProgress(100, 'Patch applied successfully!');
+                        patchedRomBlob = patchedRom;
+
+                        setTimeout(() => {
+                            hideAllMessages();
+                            successMessage.style.display = 'block';
+                        }, 500);
+
+                    } catch (error) {
+                        console.error('Error processing ROM:', error);
+                        hideAllMessages();
+                        statusInfo.style.display = 'block';
+                        statusTitle.textContent = 'Error';
+                        statusMessage.textContent = 'Failed to process ROM: ' + error.message;
+                    }
+                }
+
+                async function calculateSHA1(file) {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const hashBuffer = await crypto.subtle.digest('SHA-1', arrayBuffer);
+                    const hashArray = Array.from(new Uint8Array(hashBuffer));
+                    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+                }
+
+                async function applyPatch(romFile) {
+                    // Fetch the patch file
+                    const patchResponse = await fetch('/data/hack/<%= locals.hackId %>/patch.ips');
+                    if (!patchResponse.ok) {
+                        throw new Error('Failed to load patch file');
+                    }
+
+                    const patchData = await patchResponse.arrayBuffer();
+                    const romData = await romFile.arrayBuffer();
+
+                    // Apply IPS patch (simplified implementation)
+                    const patchedData = applyIPSPatch(romData, patchData);
+                    return new Blob([patchedData], { type: 'application/octet-stream' });
+                }
+
+                function applyIPSPatch(romData, patchData) {
+                    const rom = new Uint8Array(romData);
+                    const patch = new Uint8Array(patchData);
+
+                    // Check IPS header
+                    if (patch[0] !== 0x50 || patch[1] !== 0x41 || patch[2] !== 0x54 || patch[3] !== 0x43 || patch[4] !== 0x48) {
+                        throw new Error('Invalid IPS patch file');
+                    }
+
+                    let offset = 5;
+                    const result = new Uint8Array(rom);
+
+                    while (offset < patch.length - 3) {
+                        // Check for EOF
+                        if (patch[offset] === 0x45 && patch[offset + 1] === 0x4F && patch[offset + 2] === 0x46) {
+                            break;
+                        }
+
+                        // Read address (3 bytes, big endian)
+                        const address = (patch[offset] << 16) | (patch[offset + 1] << 8) | patch[offset + 2];
+                        offset += 3;
+
+                        // Read size (2 bytes, big endian)
+                        const size = (patch[offset] << 8) | patch[offset + 1];
+                        offset += 2;
+
+                        if (size === 0) {
+                            // RLE encoding
+                            const rleSize = (patch[offset] << 8) | patch[offset + 1];
+                            offset += 2;
+                            const value = patch[offset];
+                            offset += 1;
+
+                            for (let i = 0; i < rleSize; i++) {
+                                if (address + i < result.length) {
+                                    result[address + i] = value;
+                                }
+                            }
+                        } else {
+                            // Normal patch
+                            for (let i = 0; i < size; i++) {
+                                if (address + i < result.length && offset + i < patch.length) {
+                                    result[address + i] = patch[offset + i];
+                                }
+                            }
+                            offset += size;
+                        }
+                    }
+
+                    return result;
+                }
+
+                function downloadPatchedRom() {
+                    const url = URL.createObjectURL(patchedRomBlob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = '<%= hack.fileName %>.bin';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }
+            });
+        </script>

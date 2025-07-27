@@ -1,0 +1,173 @@
+<div class="search-container">
+    <h2>ROM Search</h2>
+
+    <!-- File Drop Zone -->
+    <div id="dropzone" class="drop-zone">
+        <div class="drop-zone-content">
+            <i class="drop-icon">📁</i>
+            <p class="drop-text">Drop any file here</p>
+            <p class="drop-subtext">or click to browse</p>
+            <input type="file" id="fileInput" class="file-input" accept="*/*">
+        </div>
+        <div class="drop-zone-overlay" id="dropOverlay">
+            <p>Drop your file here</p>
+        </div>
+    </div>
+
+    <!-- File Info Display -->
+    <div id="fileInfo" class="file-info" style="display: none;">
+        <h3>File Information</h3>
+        <p><strong>Name:</strong> <span id="fileName"></span></p>
+        <p><strong>Size:</strong> <span id="fileSize"></span></p>
+        <p><strong>SHA1:</strong> <span id="fileHash"></span></p>
+    </div>
+
+    <!-- Error Message Display -->
+    <div id="errorMessage" class="error-message" style="display: none;">
+        <h3>❌ No Game Found</h3>
+        <p>Sorry, we couldn't find a game matching this ROM file's hash.</p>
+        <p>This ROM might not be in our database yet, or it could be a modified/patched version.</p>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+        const dropOverlay = document.getElementById('dropOverlay');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const fileHash = document.getElementById('fileHash');
+        const errorMessage = document.getElementById('errorMessage');
+
+        let dragCounter = 0;
+
+        // Prevent default drag behaviors globally
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        // Handle drag enter/leave with counter to prevent flashing
+        dropzone.addEventListener('dragenter', function (e) {
+            preventDefaults(e);
+            dragCounter++;
+            highlight();
+        });
+
+        dropzone.addEventListener('dragleave', function (e) {
+            preventDefaults(e);
+            dragCounter--;
+            if (dragCounter === 0) {
+                unhighlight();
+            }
+        });
+
+        dropzone.addEventListener('dragover', function (e) {
+            preventDefaults(e);
+        });
+
+        // Handle dropped files
+        dropzone.addEventListener('drop', function (e) {
+            preventDefaults(e);
+            dragCounter = 0;
+            unhighlight();
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        });
+
+        // Handle file input change
+        fileInput.addEventListener('change', function (e) {
+            handleFiles(e.target.files);
+        });
+
+        // Click to browse
+        dropzone.addEventListener('click', function () {
+            fileInput.click();
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function highlight() {
+            dropzone.classList.add('drag-over');
+            dropOverlay.style.display = 'flex';
+        }
+
+        function unhighlight() {
+            dropzone.classList.remove('drag-over');
+            dropOverlay.style.display = 'none';
+        }
+
+        function handleFiles(files) {
+            if (files.length > 0) {
+                const file = files[0];
+                displayFileInfo(file);
+            }
+        }
+
+        async function getFileHash(file) {
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const hashBuffer = await crypto.subtle.digest('SHA-1', arrayBuffer);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+                return hashHex;
+            } catch (error) {
+                console.error('Error calculating hash:', error);
+                return 'Error calculating hash';
+            }
+        }
+
+        async function displayFileInfo(file) {
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileHash.textContent = 'Calculating...';
+            fileInfo.style.display = 'block';
+            errorMessage.style.display = 'none'; // Hide any previous error
+
+            // Calculate hash asynchronously
+            const hash = await getFileHash(file);
+            fileHash.textContent = hash;
+            lookupGameByHash(hash);
+        }
+
+        async function lookupGameByHash(hash) {
+            try {
+                const response = await fetch(`/data/hashes/${hash}/index.json`);
+                if (response.ok) {
+                    const data = JSON.parse(await response.text());
+                    if (data.gameId) {
+                        // Redirect to game page or display game info
+                        window.location.href = `/game/${data.gameId}`;
+                    } else {
+                        console.warn('No game found for this hash');
+                        showErrorMessage();
+                    }
+                } else {
+                    console.error('Error fetching game data:', response.statusText);
+                    showErrorMessage();
+                }
+            } catch (error) {
+                console.error('Error during fetch:', error);
+                showErrorMessage();
+            }
+        }
+
+        function showErrorMessage() {
+            errorMessage.style.display = 'block';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+    });
+</script>
