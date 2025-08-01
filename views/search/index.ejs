@@ -110,28 +110,15 @@
             }
         }
 
-        async function getFileHash(file) {
-            try {
-                const arrayBuffer = await file.arrayBuffer();
-                const hashBuffer = await crypto.subtle.digest('SHA-1', arrayBuffer);
-                const hashArray = Array.from(new Uint8Array(hashBuffer));
-                const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
-                return hashHex;
-            } catch (error) {
-                console.error('Error calculating hash:', error);
-                return 'Error calculating hash';
-            }
-        }
-
         async function displayFileInfo(file) {
             fileName.textContent = file.name;
-            fileSize.textContent = formatFileSize(file.size);
+            fileSize.textContent = App.utils.formatFileSize(file.size);
             fileHash.textContent = 'Calculating...';
             fileInfo.style.display = 'block';
             errorMessage.style.display = 'none'; // Hide any previous error
 
-            // Calculate hash asynchronously
-            const hash = await getFileHash(file);
+            // Calculate hash asynchronously using built utility
+            const hash = await App.utils.calculateSHA1(file);
             fileHash.textContent = hash;
             lookupGameByHash(hash);
         }
@@ -160,14 +147,6 @@
 
         function showErrorMessage() {
             errorMessage.style.display = 'block';
-        }
-
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
     });
 </script>

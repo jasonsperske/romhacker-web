@@ -154,9 +154,9 @@
                     updateProgress(10, 'Reading ROM file...');
 
                     try {
-                        // Calculate ROM hash
+                        // Calculate ROM hash using built utility
                         updateProgress(30, 'Calculating SHA-1 hash...');
-                        const romHash = await calculateSHA1(file);
+                        const romHash = await App.utils.calculateSHA1(file);
 
                         // Check if hash matches
                         updateProgress(50, 'Verifying ROM...');
@@ -188,13 +188,6 @@
                     }
                 }
 
-                async function calculateSHA1(file) {
-                    const arrayBuffer = await file.arrayBuffer();
-                    const hashBuffer = await crypto.subtle.digest('SHA-1', arrayBuffer);
-                    const hashArray = Array.from(new Uint8Array(hashBuffer));
-                    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
-                }
-
                 async function applyPatch(romFile) {
                     // Fetch the patch file
                     const patchResponse = await fetch('/data/hack/<%= locals.hackId %>/patch.ips');
@@ -203,63 +196,9 @@
                     }
 
                     const patchData = await patchResponse.arrayBuffer();
-                    const romData = await romFile.arrayBuffer();
 
-                    // Apply IPS patch (simplified implementation)
-                    const patchedData = applyIPSPatch(romData, patchData);
-                    return new Blob([patchedData], { type: 'application/octet-stream' });
-                }
-
-                function applyIPSPatch(romData, patchData) {
-                    const rom = new Uint8Array(romData);
-                    const patch = new Uint8Array(patchData);
-
-                    // Check IPS header
-                    if (patch[0] !== 0x50 || patch[1] !== 0x41 || patch[2] !== 0x54 || patch[3] !== 0x43 || patch[4] !== 0x48) {
-                        throw new Error('Invalid IPS patch file');
-                    }
-
-                    let offset = 5;
-                    const result = new Uint8Array(rom);
-
-                    while (offset < patch.length - 3) {
-                        // Check for EOF
-                        if (patch[offset] === 0x45 && patch[offset + 1] === 0x4F && patch[offset + 2] === 0x46) {
-                            break;
-                        }
-
-                        // Read address (3 bytes, big endian)
-                        const address = (patch[offset] << 16) | (patch[offset + 1] << 8) | patch[offset + 2];
-                        offset += 3;
-
-                        // Read size (2 bytes, big endian)
-                        const size = (patch[offset] << 8) | patch[offset + 1];
-                        offset += 2;
-
-                        if (size === 0) {
-                            // RLE encoding
-                            const rleSize = (patch[offset] << 8) | patch[offset + 1];
-                            offset += 2;
-                            const value = patch[offset];
-                            offset += 1;
-
-                            for (let i = 0; i < rleSize; i++) {
-                                if (address + i < result.length) {
-                                    result[address + i] = value;
-                                }
-                            }
-                        } else {
-                            // Normal patch
-                            for (let i = 0; i < size; i++) {
-                                if (address + i < result.length && offset + i < patch.length) {
-                                    result[address + i] = patch[offset + i];
-                                }
-                            }
-                            offset += size;
-                        }
-                    }
-
-                    return result;
+                    // Use the built ROM patcher library
+                    return await RomPatcherClient.applyPatch(romFile, patchData);
                 }
 
                 function downloadPatchedRom() {

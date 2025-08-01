@@ -92,6 +92,7 @@ main {
   font-size: 3rem;
   margin-bottom: 1rem;
   display: block;
+  font-style: normal;
 }
 
 .drop-text {

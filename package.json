@@ -6,7 +6,11 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "build": "node build.js",
+    "build:watch": "nodemon build.js",
+    "build:prod": "NODE_ENV=production node build.js",
+    "prestart": "npm run build"
   },
   "author": "Jason Sperske",
   "license": "ISC",
@@ -14,9 +18,11 @@
     "ejs": "^3.1.10",
     "express": "^5.1.0",
     "express-ejs-layouts": "^2.5.1",
-    "express-static": "^1.2.6"
+    "express-static": "^1.2.6",
+    "rom-patcher": "^3.1.0-b"
   },
   "devDependencies": {
+    "esbuild": "^0.24.2",
     "nodemon": "^3.1.7"
   }
 }
