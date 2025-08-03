@@ -24,31 +24,51 @@
                 </div>
             </div>
 
-            <!-- Status Display -->
-            <div id="statusInfo" class="status-info" style="display: none;">
-                <h3 id="statusTitle">Processing...</h3>
-                <p id="statusMessage">Analyzing ROM file...</p>
-                <div id="progressBar" class="progress-bar">
-                    <div id="progressFill" class="progress-fill"></div>
+            <!-- Optional Addendum Patches -->
+            <% if (hack.addendums && hack.addendums.length> 0) { %>
+                <div class="addendum-section">
+                    <h3>📋 Optional Patches</h3>
+                    <p>Select additional patches to apply (these will be applied after the main patch):</p>
+                    <div class="addendum-list">
+                        <% hack.addendums.forEach(function(addendum, index) { %>
+                            <label class="addendum-item">
+                                <input type="checkbox" id="addendum-<%= index %>" name="addendum"
+                                    value="<%= addendum %>">
+                                <span class="addendum-name">
+                                    <%= addendum.replace(/\.ips$|_Addendum\.ips$/i, '' ).replace(/_/g, ' ' ) %>
+                                </span>
+                            </label>
+                            <% }); %>
+                    </div>
                 </div>
-            </div>
+                <% } %>
 
-            <!-- Hash Mismatch Error -->
-            <div id="hashError" class="error-message" style="display: none;">
-                <h3>❌ ROM Hash Mismatch</h3>
-                <p><strong>Expected:</strong> <span id="expectedHash">
-                        <%= hack.hash %>
-                    </span></p>
-                <p><strong>Found:</strong> <span id="foundHash"></span></p>
-                <p>This patch is designed for a specific ROM version. Please ensure you have the correct ROM file.</p>
-            </div>
+                    <!-- Status Display -->
+                    <div id="statusInfo" class="status-info" style="display: none;">
+                        <h3 id="statusTitle">Processing...</h3>
+                        <p id="statusMessage">Analyzing ROM file...</p>
+                        <div id="progressBar" class="progress-bar">
+                            <div id="progressFill" class="progress-fill"></div>
+                        </div>
+                    </div>
 
-            <!-- Success Message -->
-            <div id="successMessage" class="success-message" style="display: none;">
-                <h3>✅ Patch Applied Successfully!</h3>
-                <p>Your ROM has been patched and is ready for download.</p>
-                <button id="downloadBtn" class="download-btn">Download Patched ROM</button>
-            </div>
+                    <!-- Hash Mismatch Error -->
+                    <div id="hashError" class="error-message" style="display: none;">
+                        <h3>❌ ROM Hash Mismatch</h3>
+                        <p><strong>Expected:</strong> <span id="expectedHash">
+                                <%= hack.hash %>
+                            </span></p>
+                        <p><strong>Found:</strong> <span id="foundHash"></span></p>
+                        <p>This patch is designed for a specific ROM version. Please ensure you have the correct ROM
+                            file.</p>
+                    </div>
+
+                    <!-- Success Message -->
+                    <div id="successMessage" class="success-message" style="display: none;">
+                        <h3>✅ Patch Applied Successfully!</h3>
+                        <p>Your ROM has been patched and is ready for download.</p>
+                        <button id="downloadBtn" class="download-btn">Download Patched ROM</button>
+                    </div>
         </div>
         <script src="/dist/RomPatcher.js"></script>
         <script src="/dist/modules/BinFile.js"></script>
@@ -192,7 +212,7 @@
                 }
 
                 async function applyPatch(romFile) {
-                    // Fetch the patch file
+                    // Fetch the main patch file
                     const patchResponse = await fetch('/data/hack/<%= locals.hackId %>/patch.ips');
                     if (!patchResponse.ok) {
                         throw new Error('Failed to load patch file');
@@ -202,16 +222,44 @@
 
                     // Convert File to BinFile format expected by the library
                     const romArrayBuffer = await romFile.arrayBuffer();
-                    const romBinFile = new BinFile(romArrayBuffer);
+                    let romBinFile = new BinFile(romArrayBuffer);
                     romBinFile.fileName = romFile.name;
 
-                    const patch = RomPatcher.parsePatchFile(new BinFile(patchData));
+                    // Apply main patch
+                    const mainPatch = RomPatcher.parsePatchFile(new BinFile(patchData));
 
                     try {
-                        return RomPatcher.applyPatch(romBinFile, patch);
+                        romBinFile = RomPatcher.applyPatch(romBinFile, mainPatch);
+
+                        // Get selected addendum patches
+                        const selectedAddendums = getSelectedAddendums();
+
+                        // Apply each selected addendum patch
+                        for (let i = 0; i < selectedAddendums.length; i++) {
+                            updateProgress(70 + (i + 1) * (20 / (selectedAddendums.length + 1)),
+                                `Applying addendum: ${selectedAddendums[i]}...`);
+
+                            const addendumResponse = await fetch(`/data/hack/<%= locals.hackId %>/${selectedAddendums[i]}`);
+                            if (!addendumResponse.ok) {
+                                console.warn(`Failed to load addendum patch: ${selectedAddendums[i]}`);
+                                continue;
+                            }
+
+                            const addendumData = await addendumResponse.arrayBuffer();
+                            const addendumPatch = RomPatcher.parsePatchFile(new BinFile(addendumData));
+                            romBinFile = RomPatcher.applyPatch(romBinFile, addendumPatch);
+                        }
+                        romBinFile.setName("<%= hack.fileName %>");
+
+                        return romBinFile;
                     } catch (error) {
                         throw new Error('Patch application failed: ' + error.message);
                     }
+                }
+
+                function getSelectedAddendums() {
+                    const checkboxes = document.querySelectorAll('input[name="addendum"]:checked');
+                    return Array.from(checkboxes).map(cb => cb.value);
                 }
             });
         </script>

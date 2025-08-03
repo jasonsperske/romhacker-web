@@ -241,3 +241,58 @@ main {
 .download-btn:active {
   transform: translateY(1px);
 }
+
+/* Addendum patches section */
+.addendum-section {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.addendum-section h3 {
+  margin-top: 0;
+  color: #495057;
+  font-size: 1.2rem;
+}
+
+.addendum-section p {
+  margin-bottom: 1rem;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.addendum-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.addendum-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  background-color: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.addendum-item:hover {
+  background-color: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.addendum-item input[type="checkbox"] {
+  margin-right: 0.75rem;
+  transform: scale(1.2);
+  cursor: pointer;
+}
+
+.addendum-name {
+  font-weight: 500;
+  color: #495057;
+  cursor: pointer;
+}
