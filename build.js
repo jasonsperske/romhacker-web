@@ -2,6 +2,7 @@ import { build } from "esbuild";
 import fs from "fs";
 import path from "path";
 
+const nodeModulesDir = "./node_modules";
 const buildDir = "./static/dist";
 const srcDir = "./src/client";
 
@@ -25,7 +26,6 @@ async function buildClientLibraries() {
       bundle: true,
       outfile: path.join(buildDir, "main.js"),
       format: "iife",
-      globalName: "App",
       minify: process.env.NODE_ENV === "production",
       sourcemap: process.env.NODE_ENV !== "production",
       platform: "browser",
@@ -36,17 +36,36 @@ async function buildClientLibraries() {
       },
     });
 
-    // Build ROM patcher bundle separately (since it might be large)
-    await build({
-      entryPoints: [path.join(srcDir, "rom-patcher.mjs")],
-      bundle: true,
-      outfile: path.join(buildDir, "rom-patcher.js"),
-      format: "iife",
-      globalName: "RomPatcherClient",
-      minify: process.env.NODE_ENV === "production",
-      sourcemap: process.env.NODE_ENV !== "production",
-      platform: "browser",
-      target: "es2020",
+    // Copy ROM patcher webworker files
+    const romPatcherFiles = [
+      "RomPatcher.js",
+      "RomPatcher.webworker.apply.js",
+      "RomPatcher.webworker.crc.js",
+      "RomPatcher.webworker.create.js",
+      "modules/BinFile.js",
+      "modules/HashCalculator.js",
+      "modules/RomPatcher.format.ips.js",
+    ];
+
+    const romPatcherDir = path.join(
+      nodeModulesDir,
+      "rom-patcher/rom-patcher-js"
+    );
+    romPatcherFiles.forEach((romPatcherFile) => {
+      const sourcePath = path.join(romPatcherDir, romPatcherFile);
+      const destPath = path.join(buildDir, romPatcherFile);
+      if (!fs.existsSync(path.dirname(destPath))) {
+        fs.mkdirSync(path.dirname(destPath), { recursive: true });
+      }
+
+      if (fs.existsSync(sourcePath)) {
+        fs.copyFileSync(sourcePath, destPath);
+        console.log(`📋 Copied ${romPatcherFile}`);
+      } else {
+        console.warn(
+          `⚠️  Warning: ${romPatcherFile} not found in ${sourcePath}`
+        );
+      }
     });
 
     console.log("✅ Build completed successfully!");

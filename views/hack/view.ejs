@@ -50,7 +50,10 @@
                 <button id="downloadBtn" class="download-btn">Download Patched ROM</button>
             </div>
         </div>
-
+        <script src="/dist/RomPatcher.js"></script>
+        <script src="/dist/modules/BinFile.js"></script>
+        <script src="/dist/modules/HashCalculator.js"></script>
+        <script src="/dist/modules/RomPatcher.format.ips.js"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function () {
                 const dropzone = document.getElementById('dropzone');
@@ -112,7 +115,7 @@
 
                 downloadBtn.addEventListener('click', function () {
                     if (patchedRomBlob) {
-                        downloadPatchedRom();
+                        patchedRomBlob.save();
                     }
                 });
 
@@ -169,10 +172,10 @@
 
                         // Hash matches, apply patch
                         updateProgress(70, 'Applying patch...');
-                        const patchedRom = await applyPatch(file);
+
+                        patchedRomBlob = await applyPatch(file);
 
                         updateProgress(100, 'Patch applied successfully!');
-                        patchedRomBlob = patchedRom;
 
                         setTimeout(() => {
                             hideAllMessages();
@@ -197,19 +200,18 @@
 
                     const patchData = await patchResponse.arrayBuffer();
 
-                    // Use the built ROM patcher library
-                    return await RomPatcherClient.applyPatch(romFile, patchData);
-                }
+                    // Convert File to BinFile format expected by the library
+                    const romArrayBuffer = await romFile.arrayBuffer();
+                    const romBinFile = new BinFile(romArrayBuffer);
+                    romBinFile.fileName = romFile.name;
 
-                function downloadPatchedRom() {
-                    const url = URL.createObjectURL(patchedRomBlob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = '<%= hack.fileName %>.bin';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
+                    const patch = RomPatcher.parsePatchFile(new BinFile(patchData));
+
+                    try {
+                        return RomPatcher.applyPatch(romBinFile, patch);
+                    } catch (error) {
+                        throw new Error('Patch application failed: ' + error.message);
+                    }
                 }
             });
         </script>
