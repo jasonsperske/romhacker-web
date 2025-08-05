@@ -16,6 +16,32 @@ if (!fs.existsSync(srcDir)) {
   fs.mkdirSync(srcDir, { recursive: true });
 }
 
+async function buildStyleLibraries() {
+  console.log("Building style libraries...");
+  try {
+    // Build NES.css
+    const nesCssPath = path.join(
+      nodeModulesDir,
+      "nes.css",
+      "css",
+      "nes.min.css"
+    );
+    const destNesCssPath = path.join(buildDir, "nes.min.css");
+
+    if (fs.existsSync(nesCssPath)) {
+      fs.copyFileSync(nesCssPath, destNesCssPath);
+      console.log("📋 Copied nes.min.css");
+    } else {
+      console.warn("⚠️  Warning: nes.min.css not found in node_modules");
+    }
+
+    console.log("✅ Style libraries built successfully!");
+  } catch (error) {
+    console.error("❌ Build failed:", error);
+    process.exit(1);
+  }
+}
+
 async function buildClientLibraries() {
   console.log("Building client-side libraries...");
 
@@ -86,3 +112,4 @@ async function buildClientLibraries() {
 
 // Run the build
 buildClientLibraries();
+buildStyleLibraries();

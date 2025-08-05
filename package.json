@@ -20,6 +20,7 @@
     "express-ejs-layouts": "^2.5.1",
     "express-static": "^1.2.6",
     "glob": "^11.0.3",
+    "nes.css": "^2.3.0",
     "rom-patcher": "https://github.com/marcrobledo/RomPatcher.js.git#v3.0"
   },
   "devDependencies": {
